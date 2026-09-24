@@ -65,9 +65,9 @@ interface BookedPass {
 export const TICKET_TIERS = {
   general: {
     id: "general",
-    label: "Single",
-    passTypeUI: "Single Pass",
-    pdfTitle: "Single Pass",
+    label: "Solo",
+    passTypeUI: "Solo Pass",
+    pdfTitle: "Solo Pass",
     persons: 1,
     price: 149,
     originalPrice: 249,
@@ -315,10 +315,10 @@ export default function Home() {
 
   // Handle Confirm Booking & Payment
   const handleConfirmBooking = async () => {
-    const newPassId = `RN-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newPassId = `DANDIYA-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const passTitle =
       bookingPassType === "general"
-        ? "Single Pass"
+        ? "Solo Pass"
         : bookingPassType === "season"
         ? "Couple Pass"
         : "Family (4+1) Pass";
@@ -352,7 +352,7 @@ export default function Home() {
           issuedAt: newPass.bookedAt,
           ticketType: newPass.title,
           name: newPass.holder,
-          number: `'${newPass.phone.replace(/^\+91\s*/, '')}`, // Remove +91 and prepend single quote
+          number: `'${newPass.phone.replace(/^\+91\s*/, '')}`, // Remove +91 and prepend Solo quote
           address: userLocation, // Send fetched location
           emergencyContact: "N/A",
           quantity: newPass.quantity,
@@ -403,7 +403,10 @@ export default function Home() {
           reader.readAsDataURL(blob);
         })).catch(() => null);
 
-      const [bgBase64, qrBase64] = await Promise.all([readAsDataURL(bgUrl), readAsDataURL(qrUrl)]);
+      const [bgBase64, qrBase64] = await Promise.all([
+        readAsDataURL(bgUrl), 
+        readAsDataURL(qrUrl)
+      ]);
 
       // Draw Background
       if (bgBase64) {
@@ -436,62 +439,85 @@ export default function Home() {
       pdf.setFontSize(16);
       pdf.text("CHHOTI BALLIA DANDIYA NIGHTS", 40, 115);
       
-      pdf.setFontSize(12);
-      pdf.setTextColor(221, 193, 177); // #ddc1b1
-      pdf.text(`OCT 13, 2026 • 7:00 PM`, 40, 140);
+      // Date Row
       pdf.setFontSize(10);
-      pdf.setTextColor(165, 140, 125);
-      pdf.text("Venue: Chhoti Ballia, Begusarai", 40, 155);
+      pdf.setTextColor(165, 140, 125); // muted
+      pdf.text("DATE", 40, 138);
+      pdf.setFontSize(11);
+      pdf.setTextColor(221, 193, 177); // bright
+      pdf.setFont("helvetica", "bold");
+      pdf.text(`OCT 13, 2026 • 7:00 PM`, 90, 138);
+      pdf.setFont("helvetica", "normal");
+      
+      // Venue Row
+      pdf.setFontSize(10);
+      pdf.setTextColor(165, 140, 125); // muted
+      pdf.text("VENUE", 40, 156);
+      pdf.setTextColor(221, 193, 177); // bright
+      pdf.text("Shehnai Vivah Bhavan, Phool Chowk,", 90, 156);
+      pdf.text("Lakhminia, Ballia, Begusarai - 851211", 90, 170);
+      
+      // Map Link
+      pdf.setTextColor(240, 191, 92);
+      pdf.setFontSize(8.5);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("TAP FOR GOOGLE MAPS ROUTE", 90, 184);
+      pdf.setFont("helvetica", "normal");
+      
+      pdf.link(90, 146, 200, 42, { url: "https://www.google.com/maps/dir/?api=1&destination=25.4152640,86.3225081" });
 
       // Ticket ID pill
       pdf.setDrawColor(232, 121, 32); // #e87920
       pdf.setFillColor(41, 27, 36);
-      pdf.roundedRect(420, 95, 135, 25, 12.5, 12.5, "FD");
+      pdf.roundedRect(480, 95, 75, 25, 12.5, 12.5, "FD");
       pdf.setTextColor(255, 182, 136);
-      pdf.setFontSize(10);
-      pdf.text(`ID: ${pass.id.slice(-4)}`, 440, 112);
+      pdf.setFontSize(11);
+      pdf.text(`ID: ${pass.id.slice(-4)}`, 495, 112.5);
 
       // Draw QR Code
       if (qrBase64) {
         pdf.setFillColor(255, 255, 255);
-        pdf.roundedRect(385, 150, 170, 170, 15, 15, "F");
-        pdf.addImage(qrBase64, "PNG", 395, 160, 150, 150);
+        pdf.roundedRect(385, 165, 170, 170, 15, 15, "F");
+        pdf.addImage(qrBase64, "PNG", 395, 175, 150, 150);
       }
 
       // Details Grid (Left of QR Code)
       pdf.setFillColor(37, 24, 32); // #251820
-      pdf.roundedRect(40, 185, 320, 135, 10, 10, "F");
+      pdf.roundedRect(40, 200, 320, 135, 10, 10, "F");
 
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
       pdf.setTextColor(165, 140, 125); // #a58c7d
-      pdf.text("TICKET HOLDER", 60, 210);
-      pdf.text("PHONE NUMBER", 230, 210);
+      pdf.text("TICKET HOLDER", 60, 220);
+      pdf.text("PHONE NUMBER", 230, 220);
       
-      pdf.setFontSize(13);
+      pdf.setFontSize(12);
       pdf.setTextColor(255, 255, 255);
       pdf.setFont("helvetica", "bold");
       const holderName = pass.holder.length > 20 ? pass.holder.substring(0, 18) + '...' : pass.holder;
-      pdf.text(holderName.toUpperCase(), 60, 228);
-      pdf.text(pass.phone.replace(/^\+91\s*/, ''), 230, 228);
+      pdf.text(holderName.toUpperCase(), 60, 242);
+      pdf.text(pass.phone.replace(/^\+91\s*/, ''), 230, 242);
+
+      const totalPersons = pass.quantity * TICKET_TIERS[pass.passType].persons;
 
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
       pdf.setTextColor(165, 140, 125);
-      pdf.text("QUANTITY", 60, 265);
-      pdf.text("TOTAL PAID", 150, 265);
-      pdf.text("PASS TYPE", 230, 265);
+      pdf.text("ADMIT", 60, 280);
+      pdf.text("TOTAL PAID", 145, 280);
+      pdf.text("PASS", 230, 280);
 
-      pdf.setFontSize(12);
+      pdf.setFontSize(11);
       pdf.setFont("helvetica", "bold");
       pdf.setTextColor(255, 255, 255);
-      pdf.text(`${pass.quantity} Person(s)`, 60, 283);
+      pdf.text(`${totalPersons} Person(s)`, 60, 302);
       pdf.setTextColor(240, 191, 92);
-      pdf.text(`INR ${pass.totalAmount.toLocaleString("en-IN")}`, 150, 283);
+      pdf.text(`INR ${pass.totalAmount.toLocaleString("en-IN")}`, 145, 302);
       
       const passTypeName = TICKET_TIERS[pass.passType].pdfTitle;
+      const passTypeDisplay = pass.quantity > 1 ? `${passTypeName} (x${pass.quantity})` : passTypeName;
       pdf.setTextColor(255, 255, 255);
-      pdf.text(passTypeName.toUpperCase(), 230, 283);
+      pdf.text(passTypeDisplay.toUpperCase(), 230, 302);
 
       // Description
       pdf.setFontSize(11);
@@ -548,6 +574,8 @@ export default function Home() {
         ["• Food stalls inside", "  Pure Veg only"],
         ["• Basic medical support", "  First-aid on site"],
         ["• Washrooms available", "  Separate for male/female"],
+        ["• Complimentary water", "  Free water bottle on entry"],
+        ["• Dandiya sticks", "  Provided free with ticket"],
         ["• Open ground venue", "  Standing and dancing area"]
       ];
 
@@ -571,9 +599,13 @@ export default function Home() {
       pdf.setTextColor(28, 15, 24);
       pdf.setFontSize(12);
       pdf.setFont("helvetica", "bold");
-      pdf.text("CHHOTI BALLIA DANDIYA NIGHTS • VALID FOR ONE SCAN ONLY", 297, 825, { align: "center" });
+      pdf.text("CHHOTI BALLIA DANDIYA NIGHTS", 297, 818, { align: "center" });
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Event Helpline: 6202115677 / 8987259722", 297, 833, { align: "center" });
 
-      pdf.save(`${pass.id}-Ticket.pdf`);
+      const displayId = pass.id.includes('-') ? pass.id.split('-').pop() : pass.id;
+      pdf.save(`DANDIYA-2026-${displayId}-Ticket.pdf`);
     } catch (err) {
       console.error("Failed to generate PDF", err);
       alert("Failed to download PDF. Please try again.");
@@ -1140,8 +1172,8 @@ export default function Home() {
                     <div className="flex flex-col gap-0.5">
                       <span className={`text-[9px] font-extrabold uppercase tracking-[0.18em] ${
                         selectedPassType === "general" ? "text-[#e87920]" : "text-[#a58c7d]"
-                      }`}>Single Entry</span>
-                      <h3 className="font-serif text-[17px] leading-tight text-[#f4dce8] font-bold">Single</h3>
+                      }`}>Solo Entry</span>
+                      <h3 className="font-serif text-[17px] leading-tight text-[#f4dce8] font-bold">Solo</h3>
                       <span className="text-[11px] text-[#a58c7d] font-medium">1 person · Oct 13</span>
                     </div>
                     <div className="flex flex-col items-end gap-0.5">
@@ -1367,7 +1399,7 @@ export default function Home() {
                   </span>
                   <h2 className="font-serif text-xl text-[#f4dce8] font-semibold">Arrive With Grace</h2>
                   <p className="text-xs text-[#ddc1b1] mt-1 leading-relaxed">
-                    Sarkhej-Gandhinagar Corridor, {selectedCity}, Gujarat.
+                    Shehnai Vivah Bhavan, Phool Chowk, Lakhminia, Ballia, Begusarai - 851211
                   </p>
                 </div>
 
@@ -1382,20 +1414,20 @@ export default function Home() {
                   <div className="relative z-10 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-full bg-[#e87920] flex items-center justify-center text-[#502300] shadow-sm">
-                        <Navigation className="w-4 h-4" />
+                        <MapPin className="w-4 h-4" />
                       </span>
                       <div className="flex flex-col">
                         <span className="text-xs font-bold text-[#f4dce8] leading-tight">
-                          Gate 03 • VIP & General
+                          Open Ground • Main Entry
                         </span>
                         <span className="text-[10px] text-[#ddc1b1]">
-                          25 mins from Sardar Vallabhbhai Patel Airport
+                          Accessible via Phool Chowk
                         </span>
                       </div>
                     </div>
                     <button
                       onClick={() =>
-                        window.open("https://maps.google.com/?q=Begusarai+Bihar", "_blank")
+                        window.open("https://www.google.com/maps/dir/?api=1&destination=25.4152640,86.3225081", "_blank")
                       }
                       className="px-3 py-1.5 rounded-full bg-[#44353e] text-[#f4dce8] text-xs font-bold flex items-center gap-1 hover:bg-[#ffb688] hover:text-[#502300] transition-colors border border-[#403039]"
                     >
@@ -1410,29 +1442,29 @@ export default function Home() {
                   <div className="p-3 rounded-xl bg-[#291b24] border border-[#403039] flex items-center gap-2.5">
                     <Car className="w-5 h-5 text-[#ffb688] shrink-0" />
                     <div className="flex flex-col">
-                      <span className="text-xs font-semibold text-[#f4dce8]">Complimentary Valet</span>
-                      <span className="text-[10px] text-[#ddc1b1]">For VIP and season passes</span>
+                      <span className="text-xs font-semibold text-[#f4dce8]">Free Parking</span>
+                      <span className="text-[10px] text-[#ddc1b1]">Bikes and cars</span>
                     </div>
                   </div>
                   <div className="p-3 rounded-xl bg-[#291b24] border border-[#403039] flex items-center gap-2.5">
                     <Shield className="w-5 h-5 text-[#f0bf5c] shrink-0" />
                     <div className="flex flex-col">
-                      <span className="text-xs font-semibold text-[#f4dce8]">Escorted Security</span>
-                      <span className="text-[10px] text-[#ddc1b1]">24/7 dedicated surveillance</span>
+                      <span className="text-xs font-semibold text-[#f4dce8]">Medical Support</span>
+                      <span className="text-[10px] text-[#ddc1b1]">First-aid on site</span>
                     </div>
                   </div>
                   <div className="p-3 rounded-xl bg-[#291b24] border border-[#403039] flex items-center gap-2.5">
-                    <Accessibility className="w-5 h-5 text-[#ffb2b9] shrink-0" />
+                    <CheckCircle className="w-5 h-5 text-[#ffb2b9] shrink-0" />
                     <div className="flex flex-col">
-                      <span className="text-xs font-semibold text-[#f4dce8]">Accessibility Ramps</span>
-                      <span className="text-[10px] text-[#ddc1b1]">Zero-step arena entries</span>
+                      <span className="text-xs font-semibold text-[#f4dce8]">Food Stalls</span>
+                      <span className="text-[10px] text-[#ddc1b1]">Pure veg only</span>
                     </div>
                   </div>
                   <div className="p-3 rounded-xl bg-[#291b24] border border-[#403039] flex items-center gap-2.5">
-                    <Bus className="w-5 h-5 text-[#ffdea4] shrink-0" />
+                    <Sparkles className="w-5 h-5 text-[#ffdea4] shrink-0" />
                     <div className="flex flex-col">
-                      <span className="text-xs font-semibold text-[#f4dce8]">Metro Shuttles</span>
-                      <span className="text-[10px] text-[#ddc1b1]">Every 15m from Thaltej</span>
+                      <span className="text-xs font-semibold text-[#f4dce8]">Complimentary</span>
+                      <span className="text-[10px] text-[#ddc1b1]">Water & Dandiya sticks</span>
                     </div>
                   </div>
                 </div>
@@ -1537,7 +1569,7 @@ export default function Home() {
                   {openFaq === 3 && (
                     <p className="text-[11px] text-[#ddc1b1] pt-1 leading-relaxed border-t border-[#403039]/60">
                       Passes can be reassigned to friends or family up to 24 hours prior to the festival date directly
-                      inside the &quot;My Pass&quot; wallet tab. Single night passes cannot be refunded once purchased.
+                      inside the &quot;My Pass&quot; wallet tab. Solo night passes cannot be refunded once purchased.
                     </p>
                   )}
                 </div>
@@ -1868,7 +1900,7 @@ export default function Home() {
                       <span className="text-[10px] text-[#ddc1b1]">{pass.date}</span>
                     </div>
                     <div className="px-2.5 py-1 rounded-full bg-[#e87920]/20 text-[#ffb688] text-[10px] font-bold border border-[#e87920]/40">
-                      {pass.id}
+                      {`DANDIYA-2026-${pass.id.includes('-') ? pass.id.split('-').pop() : pass.id}`}
                     </div>
                   </div>
 
