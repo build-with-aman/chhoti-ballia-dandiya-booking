@@ -181,9 +181,9 @@ export default function Home() {
       if (data.status === "success" && data.tickets) {
         const passes: BookedPass[] = data.tickets.map((t: any) => {
            const typeStr = (t.ticketType || "").toLowerCase();
-           let pType = "general";
-           if (typeStr.includes("season")) pType = "season";
-           if (typeStr.includes("vip")) pType = "vip";
+           let pType: "general" | "season" | "vip" = "general";
+           if (typeStr.includes("season") || typeStr.includes("couple")) pType = "season";
+           if (typeStr.includes("vip") || typeStr.includes("family")) pType = "vip";
            
            return {
              id: String(t.ticketId),
