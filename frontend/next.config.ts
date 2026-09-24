@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Allow LAN IP to download JS chunks and HMR in development
-  allowedDevOrigins: ["192.168.1.7", "192.168.1.7:3000"],
+  output: "export",
+  basePath: "/chhoti-ballia-dandiya-booking",
+  trailingSlash: true,
+  images: {
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;
